@@ -1,0 +1,9 @@
+requests
+pandas
+joblib
+google-cloud-bigquery
+google-auth
+pandas-gbq
+pyyaml
+dotenv
+matplotlib
