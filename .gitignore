@@ -1,6 +1,5 @@
 ssh
 venv
 api_key.txt
-kw_group_data.py
 wincher_api_key.py
 .env.yaml

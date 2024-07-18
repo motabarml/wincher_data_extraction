@@ -5,5 +5,5 @@ google-cloud-bigquery
 google-auth
 pandas-gbq
 pyyaml
-dotenv
+python-dotenv
 matplotlib

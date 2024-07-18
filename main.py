@@ -47,47 +47,45 @@ def process_data(request):
     try:
         print('Getting Keywords Data..')
         keywords_json = wincher_instance.get_tracked_keywords(ranking=True)
+        if keywords_json == None:
+            api_fail_to_slack(function_name='Wincher - Hoffman Keywords Data', table_name = 'hoffman_keywords_data', time=datetime.now()) 
+            return
+        else:
+            for index,item in enumerate(keywords_json['data']):
+                print(index)
+                df_columns = {
+                'cpc' : item['cpc'],
+                'competition' : item['competition'],
+                'volume' : item['volume'],
+                'groups' : item['groups'],
+                'difficulty' : item['difficulty'],
+                'search_intents' : item['search_intents'],
+                'ranking' : item['ranking'],
+                'id' : item['id'],
+                'keyword' : item['keyword'],
+                'last_manual_refresh_at' : item['last_manual_refresh_at'],
+                'ranking_updated_at' : item['ranking_updated_at'],
+                'created_at' : item['created_at'],
+                'preferred_url' : item['preferred_url'],
+                }
+                data_list.append(df_columns)
+            print(keyword_table_id)
 
-        for index,item in enumerate(keywords_json['data']):
-            print(index)
-            df_columns = {
-            'cpc' : item['cpc'],
-            'competition' : item['competition'],
-            'volume' : item['volume'],
-            'groups' : item['groups'],
-            'difficulty' : item['difficulty'],
-            'search_intents' : item['search_intents'],
-            'ranking' : item['ranking'],
-            'id' : item['id'],
-            'keyword' : item['keyword'],
-            'last_manual_refresh_at' : item['last_manual_refresh_at'],
-            'ranking_updated_at' : item['ranking_updated_at'],
-            'created_at' : item['created_at'],
-            'preferred_url' : item['preferred_url'],
-            }
-            data_list.append(df_columns)
-        print(keyword_table_id)
+            #Creating a Dataframe from deserialized response
+            print('Creating DataFrame...')
+            keywords_dataframe = pd.DataFrame(data_list)
+            #Upload DataFrame to BigQuery
+            client = credentials_instance.bigquery_client()
+            job_config = bigquery.LoadJobConfig(
+                write_disposition="WRITE_APPEND"  # Change to "WRITE_APPEND" if you want to append data
+            )
+            print('Uploading Keywords Data now...')
+            job = client.load_table_from_dataframe(
+                keywords_dataframe, f"{dataset_id}.{keyword_table_id}", job_config=job_config,
+            )
+            job.result()  # Wait for the job to complete
+            print('Uploaded Keywords Data to BigQuery successfully done..')
     except Exception as error:
-        api_fail_to_slack(function_name='Wincher - Hoffman Keywords Data', table_name = 'hoffman_keywords_data', time=datetime.now()) 
-        return
-
-
-    #Creating a Dataframe from deserialized response
-    print('Creating DataFrame...')
-    keywords_dataframe = pd.DataFrame(data_list)
-
-    #Upload DataFrame to BigQuery
-    try:
-        client = credentials_instance.bigquery_client()
-        job_config = bigquery.LoadJobConfig(
-            write_disposition="WRITE_APPEND"  # Change to "WRITE_APPEND" if you want to append data
-        )
-        print('Uploading Keywords Data now...')
-        job = client.load_table_from_dataframe(
-            keywords_dataframe, f"{dataset_id}.{keyword_table_id}", job_config=job_config,
-        )
-        job.result()  # Wait for the job to complete
-        print('Uploaded Keywords Data to BigQuery successfully done..')
-    except Exception as error:  
         print(f'Following Error Occurred: {error}')
         post_failed_insertion_to_slack(function_name='Wincher - Hoffman Keywords Data', table_name = 'hoffman_keywords_data', time=datetime.now())
+        return

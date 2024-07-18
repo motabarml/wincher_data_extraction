@@ -1,8 +1,5 @@
 ssh
 venv
-n_jobs_scheduled.py
-position_tracking.py
-new_main.py
 api_key.txt
 kw_group_data.py
 wincher_api_key.py
